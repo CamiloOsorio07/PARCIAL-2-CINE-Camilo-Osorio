@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Boletas</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Boletas</h1>
+        <form id="boletaForm" class="mb-4">
+            <div class="form-group">
+                <select id="funcion_id" class="form-control" name="funcion_id" required></select>
+            </div>
+            <div class="form-group">
+                <select id="cliente_id" class="form-control" name="cliente_id" required></select>
+            </div>
+            <div class="form-group">
+                <select id="taquillero_id" class="form-control" name="taquillero_id" required></select>
+            </div>
+            <div class="form-group">
+                <select id="silla_id" class="form-control" name="silla_id" required></select>
+            </div>
+            <button type="submit" class="btn btn-primary">Agregar Boleta</button>
+        </form>
+        <div id="boletasList" class="list-group"></div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            function loadBoletas() {
+                $.get('/api/boletas', function(data) {
+                    let boletasList = '';
+                    data.forEach(boleta => {
+                        boletasList += `<a href="#" class="list-group-item list-group-item-action">
+                            Función: ${boleta.funcion_id.pelicula_id.titulo} - Cliente: ${boleta.cliente_id.nombre} ${boleta.cliente_id.apellido} - Taquillero: ${boleta.taquillero_id.nombre} ${boleta.taquillero_id.apellido} - Silla: Fila ${boleta.silla_id.fila}, Puesto ${boleta.silla_id.puesto} (Sala: ${boleta.silla_id.sala_id.nombre})
+                            <button class="btn btn-danger btn-sm float-right deleteBoleta" data-id="${boleta._id}">Eliminar</button>
+                        </a>`;
+                    });
+                    $('#boletasList').html(boletasList);
+                });
+            }
+
+            function loadFunciones() {
+                $.get('/api/funciones', function(data) {
+                    let funcionesOptions = '';
+                    data.forEach(funcion => {
+                        funcionesOptions += `<option value="${funcion._id}">${funcion.pelicula_id.titulo} (${funcion.fecha_hora})</option>`;
+                    });
+                    $('#funcion_id').html(funcionesOptions);
+                });
+            }
+
+            function loadClientes() {
+                $.get('/api/clientes', function(data) {
+                    let clientesOptions = '';
+                    data.forEach(cliente => {
+                        clientesOptions += `<option value="${cliente._id}">${cliente.nombre} ${cliente.apellido}</option>`;
+                    });
+                    $('#cliente_id').html(clientesOptions);
+                });
+            }
+
+            function loadTaquilleros() {
+                $.get('/api/taquilleros', function(data) {
+                    let taquillerosOptions = '';
+                    data.forEach(taquillero => {
+                        taquillerosOptions += `<option value="${taquillero._id}">${taquillero.nombre} ${taquillero.apellido}</option>`;
+                    });
+                    $('#taquillero_id').html(taquillerosOptions);
+                });
+            }
+
+            function loadSillas() {
+                $.get('/api/sillas', function(data) {
+                    let sillasOptions = '';
+                    data.forEach(silla => {
+                        sillasOptions += `<option value="${silla._id}">Fila ${silla.fila}, Puesto ${silla.puesto} (Sala: ${silla.sala_id.nombre})</option>`;
+                    });
+                    $('#silla_id').html(sillasOptions);
+                });
+            }
+
+            loadBoletas();
+            loadFunciones();
+            loadClientes();
+            loadTaquilleros();
+            loadSillas();
+
+            $('#boletaForm').on('submit', function(e) {
+                e.preventDefault();
+                const newBoleta = {
+                    funcion_id: $('#funcion_id').val(),
+                    cliente_id: $('#cliente_id').val(),
+                    taquillero_id: $('#taquillero_id').val(),
+                    silla_id: $('#silla_id').val()
+                };
+                $.post('/api/boletas', newBoleta, function() {
+                    loadBoletas();
+                    $('#boletaForm')[0].reset();
+                });
+            });
+
+            $(document).on('click', '.deleteBoleta', function() {
+                const id = $(this).data('id');
+                $.ajax({
+                    url: `/api/boletas/${id}`,
+                    type: 'DELETE',
+                    success: function() {
+                        loadBoletas();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
